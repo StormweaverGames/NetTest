@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
 
-namespace NetTest
+namespace NetTest.Common
 {
     public class KeyInput
     {

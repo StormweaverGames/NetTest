@@ -113,14 +113,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="KeyInput.cs" />
-    <Compile Include="NetInstance.cs" />
-    <Compile Include="NetworkHandler.cs" />
-    <Compile Include="PacketHandler.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="Common\PlayerInfo.cs" />
+    <Compile Include="Server\Player.cs" />
+    <Compile Include="Server\Server.cs" />
+    <Compile Include="Server\NetInstance.cs" />
+    <Compile Include="Common\KeyInput.cs" />
+    <Compile Include="Client\NetInstance.cs" />
+    <Compile Include="Client\NetworkHandler.cs" />
+    <Compile Include="Client\Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Client.cs" />
+    <Compile Include="Client\Client.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

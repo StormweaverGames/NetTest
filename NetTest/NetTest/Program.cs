@@ -6,6 +6,7 @@ using System.IO;
 using NetTest.Client;
 
 using Game = NetTest.Client.Game;
+using NetTest.Server;
 
 namespace NetTest
 {
@@ -32,121 +33,123 @@ namespace NetTest
                     break;
 
                 case "server":
-                    #region Server
-                    {
-                        Console.WriteLine("Opening server");
-                        NetPeerConfiguration config = new NetPeerConfiguration("xnaapp");
-                        config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
-                        config.Port = 14242;
-                        Console.WriteLine("Net configuration complete");
+                    GameServer server = new GameServer();
+                    server.Run(new string[] { });
+                    #region Old Server
+                    //{
+                    //    Console.WriteLine("Opening server");
+                    //    NetPeerConfiguration config = new NetPeerConfiguration("xnaapp");
+                    //    config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+                    //    config.Port = 14242;
+                    //    Console.WriteLine("Net configuration complete");
 
-                        // create and start server
-                        NetServer server = new NetServer(config);
-                        server.Start();
-                        Console.WriteLine("Net server started");
+                    //    // create and start server
+                    //    NetServer server = new NetServer(config);
+                    //    server.Start();
+                    //    Console.WriteLine("Net server started");
 
-                        // schedule initial sending of position updates
-                        double nextSendUpdates = NetTime.Now;
+                    //    // schedule initial sending of position updates
+                    //    double nextSendUpdates = NetTime.Now;
 
-                        // run until escape is pressed
-                        while (!Console.KeyAvailable || Console.ReadKey().Key != ConsoleKey.Escape)
-                        {
-                            NetIncomingMessage msg;
-                            while ((msg = server.ReadMessage()) != null)
-                            {
-                                switch (msg.MessageType)
-                                {
-                                    case NetIncomingMessageType.DiscoveryRequest:
-                                        //
-                                        // Server received a discovery request from a client; send a discovery response (with no extra data attached)
-                                        //
-                                        server.SendDiscoveryResponse(null, msg.SenderEndPoint);
-                                        Console.WriteLine("Pinged discovery request");
-                                        break;
-                                    case NetIncomingMessageType.VerboseDebugMessage:
-                                    case NetIncomingMessageType.DebugMessage:
-                                    case NetIncomingMessageType.WarningMessage:
-                                    case NetIncomingMessageType.ErrorMessage:
-                                        //
-                                        // Just print diagnostic messages to console
-                                        //
-                                        Console.WriteLine(msg.ReadString());
-                                        break;
-                                    case NetIncomingMessageType.StatusChanged:
-                                        NetConnectionStatus status = (NetConnectionStatus)msg.ReadByte();
-                                        if (status == NetConnectionStatus.Connected)
-                                        {
-                                            //
-                                            // A new player just connected!
-                                            //
-                                            Console.WriteLine(NetUtility.ToHexString(msg.SenderConnection.RemoteUniqueIdentifier) + " connected!");
+                    //    // run until escape is pressed
+                    //    while (!Console.KeyAvailable || Console.ReadKey().Key != ConsoleKey.Escape)
+                    //    {
+                    //        NetIncomingMessage msg;
+                    //        while ((msg = server.ReadMessage()) != null)
+                    //        {
+                    //            switch (msg.MessageType)
+                    //            {
+                    //                case NetIncomingMessageType.DiscoveryRequest:
+                    //                    //
+                    //                    // Server received a discovery request from a client; send a discovery response (with no extra data attached)
+                    //                    //
+                    //                    server.SendDiscoveryResponse(null, msg.SenderEndPoint);
+                    //                    Console.WriteLine("Pinged discovery request");
+                    //                    break;
+                    //                case NetIncomingMessageType.VerboseDebugMessage:
+                    //                case NetIncomingMessageType.DebugMessage:
+                    //                case NetIncomingMessageType.WarningMessage:
+                    //                case NetIncomingMessageType.ErrorMessage:
+                    //                    //
+                    //                    // Just print diagnostic messages to console
+                    //                    //
+                    //                    Console.WriteLine(msg.ReadString());
+                    //                    break;
+                    //                case NetIncomingMessageType.StatusChanged:
+                    //                    NetConnectionStatus status = (NetConnectionStatus)msg.ReadByte();
+                    //                    if (status == NetConnectionStatus.Connected)
+                    //                    {
+                    //                        //
+                    //                        // A new player just connected!
+                    //                        //
+                    //                        Console.WriteLine(NetUtility.ToHexString(msg.SenderConnection.RemoteUniqueIdentifier) + " connected!");
 
-                                            // randomize his position and store in connection tag
-                                            msg.SenderConnection.Tag = new float[] {
-									NetRandom.Instance.Next(10, 100),
-									NetRandom.Instance.Next(10, 100)
-								};
-                                        }
+                    //                        // randomize his position and store in connection tag
+                    //                        msg.SenderConnection.Tag = new float[] {
+                    //                NetRandom.Instance.Next(10, 100),
+                    //                NetRandom.Instance.Next(10, 100)
+                    //            };
+                    //                    }
 
-                                        break;
-                                    case NetIncomingMessageType.Data:
-                                        //
-                                        // The client sent input to the server
-                                        //
-                                        float xinput = msg.ReadSingle();
-                                        float yinput = msg.ReadSingle();
+                    //                    break;
+                    //                case NetIncomingMessageType.Data:
+                    //                    //
+                    //                    // The client sent input to the server
+                    //                    //
+                    //                    float xinput = msg.ReadSingle();
+                    //                    float yinput = msg.ReadSingle();
 
-                                        float[] pos = msg.SenderConnection.Tag as float[];
+                    //                    float[] pos = msg.SenderConnection.Tag as float[];
 
-                                        // fancy movement logic goes here; we just append input to position
-                                        pos[0] += xinput;
-                                        pos[1] += yinput;
-                                        break;
-                                }
+                    //                    // fancy movement logic goes here; we just append input to position
+                    //                    pos[0] += xinput;
+                    //                    pos[1] += yinput;
+                    //                    break;
+                    //            }
 
-                                //
-                                // send position updates 30 times per second
-                                //
-                                double now = NetTime.Now;
-                                if (now > nextSendUpdates)
-                                {
-                                    // Yes, it's time to send position updates
+                    //            //
+                    //            // send position updates 30 times per second
+                    //            //
+                    //            double now = NetTime.Now;
+                    //            if (now > nextSendUpdates)
+                    //            {
+                    //                // Yes, it's time to send position updates
 
-                                    // for each player...
-                                    foreach (NetConnection player in server.Connections)
-                                    {
-                                        // ... send information about every other player (actually including self)
-                                        foreach (NetConnection otherPlayer in server.Connections)
-                                        {
-                                            // send position update about 'otherPlayer' to 'player'
-                                            NetOutgoingMessage om = server.CreateMessage();
+                    //                // for each player...
+                    //                foreach (NetConnection player in server.Connections)
+                    //                {
+                    //                    // ... send information about every other player (actually including self)
+                    //                    foreach (NetConnection otherPlayer in server.Connections)
+                    //                    {
+                    //                        // send position update about 'otherPlayer' to 'player'
+                    //                        NetOutgoingMessage om = server.CreateMessage();
 
-                                            // write who this position is for
-                                            om.Write(otherPlayer.RemoteUniqueIdentifier);
+                    //                        // write who this position is for
+                    //                        om.Write(otherPlayer.RemoteUniqueIdentifier);
 
-                                            if (otherPlayer.Tag == null)
-                                                otherPlayer.Tag = new float[2];
+                    //                        if (otherPlayer.Tag == null)
+                    //                            otherPlayer.Tag = new float[2];
 
-                                            float[] pos = otherPlayer.Tag as float[];
-                                            om.Write(pos[0]);
-                                            om.Write(pos[1]);
+                    //                        float[] pos = otherPlayer.Tag as float[];
+                    //                        om.Write(pos[0]);
+                    //                        om.Write(pos[1]);
 
-                                            // send message
-                                            server.SendMessage(om, player, NetDeliveryMethod.Unreliable);
-                                        }
-                                    }
+                    //                        // send message
+                    //                        server.SendMessage(om, player, NetDeliveryMethod.Unreliable);
+                    //                    }
+                    //                }
 
-                                    // schedule next update
-                                    nextSendUpdates += (1.0 / 30.0);
-                                }
-                            }
+                    //                // schedule next update
+                    //                nextSendUpdates += (1.0 / 30.0);
+                    //            }
+                    //        }
 
-                            // sleep to allow other processes to run smoothly
-                            Thread.Sleep(1);
-                        }
+                    //        // sleep to allow other processes to run smoothly
+                    //        Thread.Sleep(1);
+                    //    }
 
-                        server.Shutdown("app exiting");
-                    }
+                    //    server.Shutdown("app exiting");
+                    //}
                     #endregion
                     break;
             }

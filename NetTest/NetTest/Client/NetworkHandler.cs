@@ -5,13 +5,14 @@ using System.Text;
 using Lidgren.Network;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using NetTest.Common;
 
 namespace NetTest.Client
 {
     public class NetworkHandler
     {
         NetClient _client;
-        int _serverPort = 14242;
+        int _serverPort = 14245;
         List<Player> _players = new List<Player>();
 
 
@@ -21,7 +22,7 @@ namespace NetTest.Client
 
         public NetworkHandler(Texture2D playerTex, PlayerInfo info)
         {
-            NetPeerConfiguration config = new NetPeerConfiguration("xnaapp");
+            NetPeerConfiguration config = new NetPeerConfiguration("nettest");
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
 
             _client = new NetClient(config);
@@ -30,6 +31,7 @@ namespace NetTest.Client
             _client.DiscoverLocalPeers(_serverPort);
 
             _playerInfo = info;
+            _playerTex = playerTex;
         }
 
         /// <summary>
@@ -61,6 +63,10 @@ namespace NetTest.Client
                 {
                     case NetIncomingMessageType.DiscoveryResponse:
                         _client.Connect(msg.SenderEndPoint);
+                        Console.WriteLine("found a server, connecting...");
+                        break;
+                    case NetIncomingMessageType.StatusChanged:
+                        Console.WriteLine("Connected to server, joining game");
                         RequestJoin();
                         break;
 
@@ -92,14 +98,60 @@ namespace NetTest.Client
                 p.Draw(spriteBatch);
         }
 
+        /// <summary>
+        /// Called when a player's state has been updated by the server
+        /// </summary>
+        /// <param name="m"></param>
+        private void HandlePlayerUpdated(NetIncomingMessage m)
+        {
+            byte pID = m.ReadByte();
+
+            float X = m.ReadSingle();
+            float Y = m.ReadSingle();
+            float speed = m.ReadSingle();
+            float direction = m.ReadSingle();
+
+            Player p = _players.Find(x => x.PlayerID == pID);
+
+            p.X = X;
+            p.Y = Y;
+            p.Speed = speed;
+            p.Direction = direction;
+        }
+
+        /// <summary>
+        /// Called when this client should request to join the server
+        /// </summary>
         private void RequestJoin()
         {
             NetOutgoingMessage m = _client.CreateMessage();
             m.Write(0);
             _playerInfo.WriteToPacket(m);
             _client.SendMessage(m, NetDeliveryMethod.ReliableOrdered);
+            Console.WriteLine("Sent join request");
         }
 
+        /// <summary>
+        /// Called when we should leave the game
+        /// </summary>
+        /// <param name="reason"></param>
+        public void ExitGame(string reason)
+        {
+            NetOutgoingMessage m= _client.CreateMessage();
+
+            m.Write((byte)1);
+            m.Write(_playerID);
+            m.Write(reason);
+
+            _client.SendMessage(m, NetDeliveryMethod.ReliableOrdered);
+            _client.WaitMessage(1000);
+            _client.Shutdown("Goodbye");
+        }
+
+        /// <summary>
+        /// Called when the server accepts a clients join attempt
+        /// </summary>
+        /// <param name="m"></param>
         private void HandleJoin(NetIncomingMessage m)
         {
             _playerID = m.ReadByte();
@@ -121,6 +173,10 @@ namespace NetTest.Client
             Console.WriteLine("Joined a game with {0} players as '{1}'", playerCount, _playerInfo.Username);
         }
 
+        /// <summary>
+        /// Called when another player joins the game
+        /// </summary>
+        /// <param name="m"></param>
         private void PlayerJoined(NetIncomingMessage m)
         {
             byte pID = m.ReadByte();
@@ -131,6 +187,10 @@ namespace NetTest.Client
             Console.WriteLine("{0} has left the game.", pInfo.Username);
         }
 
+        /// <summary>
+        /// Called when a player leaves the game
+        /// </summary>
+        /// <param name="m"></param>
         private void PlayerLeft(NetIncomingMessage m)
         {
             byte pID = m.ReadByte();

@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Lidgren.Network;
 using System.IO;
 using Microsoft.Xna.Framework.Graphics;
+using NetTest.Common;
 
 namespace NetTest.Client
 {
@@ -37,6 +38,27 @@ namespace NetTest.Client
         /// Gets this player's info
         /// </summary>
         public PlayerInfo Info { get { return _info; } }
+
+        public float X 
+        { 
+            get { return _position.X; } 
+            set { _position.X = value; } 
+        }
+        public float Y
+        {
+            get { return _position.Y; }
+            set { _position.Y = value; }
+        }
+        public float Speed 
+        { 
+            get { return _velocity; } 
+            set { _velocity = value; } 
+        }
+        public float Direction 
+        { 
+            get { return _direction; }
+            set { _direction = value; } 
+        }
 
         Dictionary<string, KeyInput> Keys = new Dictionary<string, KeyInput>();
 
@@ -102,33 +124,6 @@ namespace NetTest.Client
             _position.X = message.ReadSingle();
             _position.Y = message.ReadSingle();
             _direction = message.ReadSingle();
-        }
-    }
-
-    /// <summary>
-    /// Represents basic player profile data
-    /// </summary>
-    public struct PlayerInfo
-    {
-        public Color Color;
-        public string Username;
-
-        public void WriteToPacket(NetOutgoingMessage p)
-        {
-            p.Write(Username);
-            p.Write(Color.R);
-            p.Write(Color.G);
-            p.Write(Color.B);
-            p.Write(Color.A);
-        }
-
-        public static PlayerInfo ReadFromPacket(NetIncomingMessage p)
-        {
-            return new PlayerInfo
-            {
-                Username = p.ReadString(),
-                Color = new Color(p.ReadByte(), p.ReadByte(), p.ReadByte(), p.ReadByte())
-            };
         }
     }
 }
