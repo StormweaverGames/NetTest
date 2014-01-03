@@ -23,11 +23,18 @@ namespace NetTest.Client
         Dictionary<long, Vector2> positions = new Dictionary<long, Vector2>();
 
         NetworkHandler _netHandler;
+        PlayerInfo pInfo;
 
-        public Game()
+        BasicEffect effect;
+        string _ip;
+
+        public Game(PlayerInfo clientInfo, string IP = null)
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            pInfo = clientInfo;
+            _ip = IP;
         }
 
         protected override void Initialize()
@@ -37,16 +44,14 @@ namespace NetTest.Client
 
         protected override void LoadContent()
         {
+            CommonResources.Initialize(Content, GraphicsDevice);
+
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            texture = Content.Load<Texture2D>("dot");
+            texture = CommonResources.PlayerTex;
 
-            PlayerInfo pInfo = new PlayerInfo
-            {
-                Color = Color.Yellow,
-                Username = "Stormweaver"
-            };
-
-            _netHandler = new NetworkHandler(texture, pInfo);
+            effect = new BasicEffect(GraphicsDevice);
+            
+            _netHandler = new NetworkHandler(texture, pInfo, _ip);
         }
 
         protected override void Update(GameTime gameTime)
@@ -60,7 +65,8 @@ namespace NetTest.Client
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend);
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null,  null, 
+                Matrix.CreateTranslation(new Vector3(-_netHandler.CameraPos.X + 400, -_netHandler.CameraPos.Y + 240, 0)));
 
             _netHandler.Draw(spriteBatch);
 

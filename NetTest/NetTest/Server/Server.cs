@@ -15,6 +15,7 @@ namespace NetTest.Server
     {
         NetServer server;
         List<Player> Players = new List<Player>();
+        Vector2 RoomSize;
 
         public void Run(string[] args)
         {
@@ -28,6 +29,8 @@ namespace NetTest.Server
             server = new NetServer(config);
             server.Start();
             Console.WriteLine("Net server started");
+
+            RoomSize = new Vector2(1600 * 4, 960 * 4);
 
             // schedule initial sending of position updates
             double nextSendUpdates = NetTime.Now;
@@ -58,7 +61,7 @@ namespace NetTest.Server
                             break;
                             
                         case NetIncomingMessageType.Data:
-                            byte PacketID = msg.ReadByte();
+                            byte PacketID = msg.ReadByte(8);
 
                             switch (PacketID)
                             {
@@ -69,50 +72,53 @@ namespace NetTest.Server
                                     }
                                     break;
 
-                                case 1: // a player has left
-                                    HandlePlayerLeft(msg);
+                                case 2: //player wants to move
+                                    HandlePlayerReqMove(msg);
                                     break;
                             }
                             break;
                     }
+                }
 
-                    //
-                    // send position updates 30 times per second
-                    //
-                    double now = NetTime.Now;
-                    if (now > nextSendUpdates)
+                //
+                // send position updates 30 times per second
+                //
+                double now = NetTime.Now;
+                if (now > nextSendUpdates)
+                {
+                    // Yes, it's time to send position updates
+
+                    // for each player...
+                    foreach (Player player in Players)
                     {
-                        // Yes, it's time to send position updates
-
-                        // for each player...
-                        foreach (Player player in Players)
+                        if (player.Connection.Status == NetConnectionStatus.Disconnected)
                         {
-                            // ... send information about every other player (actually including self)
-                            foreach (Player otherPlayer in Players)
-                            {
-                                // send position update about 'otherPlayer' to 'player'
-                                NetOutgoingMessage om = server.CreateMessage();
-
-                                //write packet ID
-                                om.Write((byte)3);
-
-                                // write who this position is for
-                                om.Write(otherPlayer.PlayerID);
-
-                                //write data
-                                om.Write(otherPlayer.Position.X);
-                                om.Write(otherPlayer.Position.Y);
-                                om.Write(otherPlayer.Speed);
-                                om.Write(otherPlayer.Direction);
-
-                                // send message
-                                server.SendMessage(om, player.Connection, NetDeliveryMethod.Unreliable);
-                            }
+                            HandlePlayerLeft(player);
+                            break;
                         }
 
-                        // schedule next update
-                        nextSendUpdates += (1.0 / 30.0);
+                        player.UpdatePositions(RoomSize);
+
+                        // send position update about this player to all other players
+                        NetOutgoingMessage om = server.CreateMessage();
+
+                        //write packet ID
+                        om.Write((byte)3, 8);
+
+                        // write who this position is for
+                        om.Write(player.PlayerID);
+
+                        //write data
+                        om.Write(player.Position.X);
+                        om.Write(player.Position.Y);
+                        om.Write(player.Speed);
+                        om.Write(player.Direction);
+
+                        server.SendToAll(om, NetDeliveryMethod.Unreliable);
                     }
+
+                    // schedule next update
+                    nextSendUpdates += (1.0 / 30.0);
                 }
 
                 // sleep to allow other processes to run smoothly
@@ -130,6 +136,36 @@ namespace NetTest.Server
                     return i;
             }
             throw new ArgumentOutOfRangeException("Cannot fit any more players");
+        }
+
+        private void SendPlayerHPChanged(Player player)
+        {
+            NetOutgoingMessage m = server.CreateMessage();
+            m.Write((byte)4, 8);
+            m.Write(player.PlayerID, 8);
+            m.Write(player.Health);
+            server.SendToAll(m, NetDeliveryMethod.ReliableUnordered);
+        }
+
+        /// <summary>
+        /// Called when a player request to join
+        /// 
+        /// IN:
+        ///  - Player ID
+        ///  - SpeedChange
+        ///  - DirectionChange
+        /// </summary>
+        /// <param name="m"></param>
+        private void HandlePlayerReqMove(NetIncomingMessage m)
+        {
+            byte PlayerID = m.ReadByte(8);
+
+            float speedChange = m.ReadSingle();
+            float directionChange = m.ReadSingle();
+
+            Player p = Players.Find(x => x.PlayerID == PlayerID);
+            p.Speed += speedChange;
+            p.Direction += directionChange;
         }
 
         /// <summary>
@@ -154,13 +190,15 @@ namespace NetTest.Server
             //create new player object
             Player p = new Player(pID,
                 new Vector2(new Random().Next(10, 790), new Random().Next(10, 470)),
-                pInfo, m.SenderConnection); 
+                pInfo, m.SenderConnection);
 
             NetOutgoingMessage o = server.CreateMessage();
-            o.Write((byte)0);
+            o.Write((byte)0, 8);
             o.Write(pID);
             o.Write(p.Position.X);
             o.Write(p.Position.Y);
+            o.Write(RoomSize.X);
+            o.Write(RoomSize.Y);
             o.Write((byte)Players.Count);
 
             foreach (Player plr in Players)
@@ -173,7 +211,7 @@ namespace NetTest.Server
 
             //send message to new player
             server.SendMessage(o, p.Connection, NetDeliveryMethod.ReliableOrdered);
-            
+
             Console.WriteLine(
                 "{0} has joined the game",
                 pInfo.Username);
@@ -181,7 +219,7 @@ namespace NetTest.Server
             foreach (Player plr in Players) //loop through existing players
             {
                 NetOutgoingMessage outM = server.CreateMessage();
-                outM.Write((byte)1);
+                outM.Write((byte)1, 8);
                 outM.Write(pID);
                 outM.Write(p.Position.X);
                 outM.Write(p.Position.Y);
@@ -202,23 +240,18 @@ namespace NetTest.Server
         ///  - Reason
         /// </summary>
         /// <param name="m"></param>
-        private void HandlePlayerLeft(NetIncomingMessage m)
+        private void HandlePlayerLeft(Player removed)
         {
-            byte pID = m.ReadByte();
-            string reason = m.ReadString();
-
-            Player removed = Players.Find(x => x.PlayerID == pID); //find the player
-
             Console.WriteLine(
                 "{0} left with the following message: \n {1}",
                 removed.Info.Username,
-                reason);
+                "unknown");
 
             foreach (Player p in Players) //loop through other players
             {
                 NetOutgoingMessage o = server.CreateMessage();
-                o.Write((byte)2);
-                o.Write(pID);
+                o.Write((byte)2, 8);
+                o.Write(removed.PlayerID);
                 //notify them of play leaving
                 server.SendMessage(o, p.Connection, NetDeliveryMethod.ReliableOrdered);
             }

@@ -13,22 +13,29 @@ namespace NetTest.Client
 {
     public class Player
     {
-        static float ToRad = 180.0F / MathHelper.Pi;
+        const float _TORAD =  MathHelper.Pi / 180.0F;
+
+        private const float _FRICTION = 1.5F;
+        private const float _SPEEDELIPSON = 0.2F;
+
+        const int _HEALTHBARWIDTH = 32;
+        const int _HEALTHBARHEIGHT = 5;
 
         byte _playerID;
 
         float _direction;
-        float _velocity;
-
-        float _prevDirection;
-        float _prevVelocity;
-
+        float _speed;
+        
         Vector2 _position;
 
         PlayerInfo _info;
-
         Texture2D _texture;
         Vector2 _orgin;
+
+        float _health = 1.0F;
+
+        float _halfNameWidth = 0;
+        float _nameHeight = 0;
 
         /// <summary>
         /// Gets this player's player ID
@@ -51,17 +58,21 @@ namespace NetTest.Client
         }
         public float Speed 
         { 
-            get { return _velocity; } 
-            set { _velocity = value; } 
+            get { return _speed; } 
+            set { _speed = value; } 
         }
         public float Direction 
         { 
             get { return _direction; }
-            set { _direction = value; } 
+            set { _direction = Wrap(value, 0, 360); } 
         }
 
-        Dictionary<string, KeyInput> Keys = new Dictionary<string, KeyInput>();
-
+        public float Health
+        {
+            get { return _health; }
+            set { _health = value; }
+        }
+        
         public Player(byte ID, Vector2 position, PlayerInfo info, Texture2D texture)
         {
             this._playerID = ID;
@@ -70,60 +81,38 @@ namespace NetTest.Client
 
             this._texture = texture;
             this._orgin = new Vector2(texture.Width / 2.0F, texture.Height / 2.0F);
+
+            _halfNameWidth = CommonResources.StandardFont.MeasureString(_info.Username).X / 2.0F;
+            _nameHeight = CommonResources.StandardFont.MeasureString(_info.Username).Y;
         }
 
-        public void Update(GameTime gameTime, NetworkHandler handler)
+        public void DeadReckoning()
         {
-            for (int i = 0; i < Keys.Values.Count; i++)
-            {
-                Keys.Values.ElementAt(i).Update();
-            }
+            _position.X += (float)Math.Cos(_direction * _TORAD) * _TORAD;
+            _position.Y += (float)Math.Sin(_direction * _TORAD) * _TORAD;
 
-            if (_direction != _prevDirection || _velocity != _prevDirection)
-            {
-            }
+            _speed /= _FRICTION;
+
+            _speed = Math.Abs(_speed) < 0.1F ? 0F : _speed;
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, _position, null, _info.Color, _direction * ToRad, _orgin, 1.0F, SpriteEffects.None, 0);
-        }
-        
-        public void SendPlayerInfo(NetworkHandler handler)
-        {
-            NetOutgoingMessage m = handler.BeginPacket();
-            m.Write((byte)1);
-            m.Write(_playerID);
-            m.Write(_info.Color.R);
-            m.Write(_info.Color.G);
-            m.Write(_info.Color.B);
-            m.Write(_info.Color.A);
-            handler.EndPacket(m);
+            spriteBatch.Draw(_texture, _position, null, _info.Color, _direction * _TORAD, _orgin, 1.0F, SpriteEffects.None, 0);
+            spriteBatch.DrawString(CommonResources.StandardFont, Info.Username, new Vector2(X - _halfNameWidth, Y - 20 - _nameHeight), Color.Black);
+            spriteBatch.Draw(CommonResources.BlankTex, new Rectangle((int)(X - _HEALTHBARWIDTH / 2), (int)(Y + 20), _HEALTHBARWIDTH, _HEALTHBARHEIGHT), Color.Lerp(Color.Red, Color.Green, _health));
         }
 
-        public void HandleUpdateInfo(NetIncomingMessage message)
+        private static float Wrap(float val, float min, float max)
         {
-            _info.Color.R = message.ReadByte();
-            _info.Color.G = message.ReadByte();
-            _info.Color.B = message.ReadByte();
-            _info.Color.A = message.ReadByte();
-        }
+            float r = max - min;
 
-        public void SendPlayerUpdate(NetworkHandler handler)
-        {
-            NetOutgoingMessage m = handler.BeginPacket();
-            m.Write((byte)2);
-            m.Write(_playerID);
-            m.Write(_direction);
-            m.Write(_velocity);
-            handler.EndPacket(m);
-        }
+            while (val < min)
+                val += r;
+            while (val > max)
+                val -= r;
 
-        public void HandlePlayerUpdate(NetIncomingMessage message)
-        {
-            _position.X = message.ReadSingle();
-            _position.Y = message.ReadSingle();
-            _direction = message.ReadSingle();
+            return val;
         }
     }
 }

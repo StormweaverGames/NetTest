@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetTest", "NetTest\NetTest\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetTestContent", "NetTest\NetTestContent\NetTestContent.contentproj", "{95059E7F-7ACC-4AA7-AEB1-4222965B70C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Launcher", "Launcher\Launcher.csproj", "{07064DEE-B636-419B-B6D9-DA27EE6B76C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -17,6 +19,10 @@ Global
 		{4DB32618-77A4-4A71-9E04-2D2E83B256B3}.Release|x86.Build.0 = Release|x86
 		{95059E7F-7ACC-4AA7-AEB1-4222965B70C3}.Debug|x86.ActiveCfg = Debug|x86
 		{95059E7F-7ACC-4AA7-AEB1-4222965B70C3}.Release|x86.ActiveCfg = Release|x86
+		{07064DEE-B636-419B-B6D9-DA27EE6B76C5}.Debug|x86.ActiveCfg = Debug|x86
+		{07064DEE-B636-419B-B6D9-DA27EE6B76C5}.Debug|x86.Build.0 = Debug|x86
+		{07064DEE-B636-419B-B6D9-DA27EE6B76C5}.Release|x86.ActiveCfg = Release|x86
+		{07064DEE-B636-419B-B6D9-DA27EE6B76C5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

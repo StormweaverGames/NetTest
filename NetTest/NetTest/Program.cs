@@ -7,6 +7,10 @@ using NetTest.Client;
 
 using Game = NetTest.Client.Game;
 using NetTest.Server;
+using System.Windows.Forms;
+using NetTest.Common;
+using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 
 namespace NetTest
 {
@@ -17,16 +21,41 @@ namespace NetTest
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] args)
+        static void Main(string[] arguments)
         {
-            string GameType = "client";
-            Console.WriteLine("Enter Game Type : \n\tclient \n\tserver");
-            GameType = Console.ReadLine();
+            #region OldStartup
 
+            string[] targs = arguments[0].Split("/\\".ToCharArray());
+            List<string> targs2 = new List<string>();
+            for (int i = 0; i < targs.Length; i++)
+                if (targs[i] != "")
+                    targs2.Add(targs[i]);
+            string[] args = targs2.ToArray();
+
+            string GameType = "none";
+            PlayerInfo clientInfo = new PlayerInfo();
+            string IP = null;
+
+            if (args.Length >= 5 & args[0] == "client")
+            {
+                GameType = "client";
+                clientInfo.Username = args[1];
+                byte r = byte.Parse(args[2]);
+                byte g = byte.Parse(args[3]);
+                byte b = byte.Parse(args[4]);
+                clientInfo.Color = new Color(r, g, b, 255);
+                if (args.Length == 6)
+                    IP = args[5];
+            }
+            else if (args.Length == 1 & args[0] == "server")
+            {
+                GameType = "server";
+            }
+            
             switch (GameType.ToLower())
             {
                 case "client":
-                    using (Game game = new Game())
+                    using (Game game = new Game(clientInfo, IP))
                     {
                         game.Run();
                     }
@@ -153,6 +182,7 @@ namespace NetTest
                     #endregion
                     break;
             }
+            #endregion
         }
     }
 #endif

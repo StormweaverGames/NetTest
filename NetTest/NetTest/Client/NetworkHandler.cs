@@ -20,7 +20,20 @@ namespace NetTest.Client
         PlayerInfo _playerInfo;
         byte _playerID;
 
-        public NetworkHandler(Texture2D playerTex, PlayerInfo info)
+        PlayerInput _pInput;
+
+        Vector2 RoomSize;
+
+        public Vector2 CameraPos
+        {
+            get
+            {
+                return _players.Find(x => x.PlayerID == _playerID) != null ?
+                    _players.Find(x => x.PlayerID == _playerID).Position : Vector2.Zero;
+            }
+        }
+
+        public NetworkHandler(Texture2D playerTex, PlayerInfo info, string IP = null)
         {
             NetPeerConfiguration config = new NetPeerConfiguration("nettest");
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
@@ -28,10 +41,15 @@ namespace NetTest.Client
             _client = new NetClient(config);
             _client.Start();
 
-            _client.DiscoverLocalPeers(_serverPort);
+            if (IP == null)
+                _client.DiscoverLocalPeers(_serverPort);
+            else
+                _client.Connect(IP, _serverPort);
 
             _playerInfo = info;
             _playerTex = playerTex;
+
+            _pInput = new PlayerInput();
         }
 
         /// <summary>
@@ -55,6 +73,18 @@ namespace NetTest.Client
 
         public void Update()
         {
+            _pInput.Update();
+
+            if (_pInput.CurrentReqDirectionChange != 0 || _pInput.CurrentReqSpeedChange != 0)
+            {
+                SendInput();
+            }
+
+            foreach (Player p in _players)
+            {
+                p.UpdatePositions(RoomSize);
+            }
+
             // read messages
             NetIncomingMessage msg;
             while ((msg = _client.ReadMessage()) != null)
@@ -71,7 +101,7 @@ namespace NetTest.Client
                         break;
 
                     case NetIncomingMessageType.Data: //data was received
-                        int packetID = msg.ReadByte(); //get the packet ID
+                        int packetID = msg.ReadByte(8); //get the packet ID
 
                         switch (packetID) //toggle based on packet state
                         {
@@ -86,6 +116,14 @@ namespace NetTest.Client
                             case 2: //another player has left the game
                                 PlayerLeft(msg);
                                 break;
+
+                            case 3: //another player has left the game
+                                HandlePlayerUpdated(msg);
+                                break;
+
+                            case 4: //another player's HP has changed
+                                HandlePlayerHPChanged(msg);
+                                break;
                         }
                         break;
                 }
@@ -94,8 +132,19 @@ namespace NetTest.Client
 
         public void Draw(SpriteBatch spriteBatch)
         {
+            spriteBatch.Draw(CommonResources.MapTex, new Rectangle(0, 0, 1600 * 4, 960 * 4), Color.Olive);
             foreach (Player p in _players)
                 p.Draw(spriteBatch);
+        }
+
+        private void SendInput()
+        {
+            NetOutgoingMessage m = _client.CreateMessage();
+            m.Write((byte)2, 8);
+            m.Write(_playerID);
+            m.Write(_pInput.CurrentReqSpeedChange);
+            m.Write(_pInput.CurrentReqDirectionChange);
+            _client.SendMessage(m, NetDeliveryMethod.Unreliable);
         }
 
         /// <summary>
@@ -113,10 +162,25 @@ namespace NetTest.Client
 
             Player p = _players.Find(x => x.PlayerID == pID);
 
-            p.X = X;
-            p.Y = Y;
-            p.Speed = speed;
-            p.Direction = direction;
+            if (p != null)
+            {
+                p.X = X;
+                p.Y = Y;
+                p.Speed = speed;
+                p.Direction = direction;
+            }
+        }
+
+        private void HandlePlayerHPChanged(NetIncomingMessage m)
+        {
+            try
+            {
+                byte pID = m.ReadByte(8);
+                float newHP = m.ReadSingle();
+
+                _players.Find(x => x.PlayerID == pID).Health = newHP;
+            }
+            catch (Exception) { }
         }
 
         /// <summary>
@@ -125,7 +189,7 @@ namespace NetTest.Client
         private void RequestJoin()
         {
             NetOutgoingMessage m = _client.CreateMessage();
-            m.Write(0);
+            m.Write(0, 8);
             _playerInfo.WriteToPacket(m);
             _client.SendMessage(m, NetDeliveryMethod.ReliableOrdered);
             Console.WriteLine("Sent join request");
@@ -137,14 +201,6 @@ namespace NetTest.Client
         /// <param name="reason"></param>
         public void ExitGame(string reason)
         {
-            NetOutgoingMessage m= _client.CreateMessage();
-
-            m.Write((byte)1);
-            m.Write(_playerID);
-            m.Write(reason);
-
-            _client.SendMessage(m, NetDeliveryMethod.ReliableOrdered);
-            _client.WaitMessage(1000);
             _client.Shutdown("Goodbye");
         }
 
@@ -157,7 +213,9 @@ namespace NetTest.Client
             _playerID = m.ReadByte();
             Vector2 pos = new Vector2(m.ReadSingle(), m.ReadSingle());
 
-            _players.Add(new Player(_playerID, pos, _playerInfo, _playerTex));
+            _players.Add(new Player(_playerID, pos, _playerInfo, null));
+
+            RoomSize = new Vector2(m.ReadSingle(), m.ReadSingle());
 
             byte playerCount = m.ReadByte();
 
@@ -167,7 +225,7 @@ namespace NetTest.Client
                 Vector2 pPos = new Vector2(m.ReadSingle(), m.ReadSingle());
                 PlayerInfo pInfo = PlayerInfo.ReadFromPacket(m);
 
-                _players.Add(new Player(pID, pPos, pInfo, _playerTex));
+                _players.Add(new Player(pID, pPos, pInfo, null));
             }
 
             Console.WriteLine("Joined a game with {0} players as '{1}'", playerCount, _playerInfo.Username);
@@ -183,7 +241,7 @@ namespace NetTest.Client
             Vector2 pPos = new Vector2(m.ReadSingle(), m.ReadSingle());
             PlayerInfo pInfo = PlayerInfo.ReadFromPacket(m);
 
-            _players.Add(new Player(pID, pPos, pInfo, _playerTex));
+            _players.Add(new Player(pID, pPos, pInfo, null));
             Console.WriteLine("{0} has left the game.", pInfo.Username);
         }
 

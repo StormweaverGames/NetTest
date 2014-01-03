@@ -17,18 +17,26 @@ namespace NetTest.Common
 
         public void WriteToPacket(NetOutgoingMessage p)
         {
-            p.Write(Color.R);
-            p.Write(Color.G);
-            p.Write(Color.B);
-            p.Write(Color.A);
-            p.Write(Username);
+            p.Write((byte)Color.R, 8);
+            p.Write((byte)Color.G, 8);
+            p.Write((byte)Color.B, 8);
+            p.Write((byte)Color.A, 8);
+
+            p.Write((string)Username);
         }
 
         public static PlayerInfo ReadFromPacket(NetIncomingMessage p)
         {
             PlayerInfo r = new PlayerInfo();
-            r.Color = new Color(p.ReadByte(), p.ReadByte(), p.ReadByte(), p.ReadByte());
-            r.Username = p.ReadString();
+
+            byte R = p.ReadByte(8);
+            byte G = p.ReadByte(8);
+            byte B = p.ReadByte(8);
+            byte A = p.ReadByte(8);
+
+            p.ReadString(out r.Username);
+
+            r.Color = new Color(R,G,B,A);
             return r;
         }
     }

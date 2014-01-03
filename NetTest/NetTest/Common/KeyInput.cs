@@ -9,9 +9,9 @@ namespace NetTest.Common
 {
     public class KeyInput
     {
-        public EventHandler KeyDown = default(EventHandler);
-        public EventHandler KeyPressed = default(EventHandler);
-        public EventHandler KeyReleased = default(EventHandler);
+        public EventHandler KeyDown = BlankEventHandler;
+        public EventHandler KeyPressed = BlankEventHandler;
+        public EventHandler KeyReleased = BlankEventHandler;
 
         public readonly Keys Key;
 
@@ -40,6 +40,16 @@ namespace NetTest.Common
                 _previouslyDown = false;
                 KeyReleased.Invoke(this, default(EventArgs));
             }
+        }
+
+        private static void BlankEventHandler(object sender, EventArgs e)
+        {
+
+        }
+
+        public static implicit operator KeyInput(Keys SourceKey)
+        {
+            return new KeyInput(SourceKey);
         }
     }
 }
