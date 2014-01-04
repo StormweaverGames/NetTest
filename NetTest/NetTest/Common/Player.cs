@@ -22,6 +22,7 @@ namespace NetTest.Common
         Vector2 _position;
         float _speed, _prevSpeed;
         float _direction, _prevDirection;
+        float _prevX, _prevY;
 
         float _health = 1.0F;
         
@@ -95,13 +96,15 @@ namespace NetTest.Common
 
             _speed = Math.Abs(_speed) < 0.1F ? 0F : _speed;
 
-            if (_speed != _prevSpeed || _direction != _prevDirection)
+            if (_speed != _prevSpeed || _direction != _prevDirection || X != _prevX || Y != _prevY)
                 _needsUpdate = true;
             else
                 _needsUpdate = false;
 
             _prevSpeed = _speed;
             _prevDirection = _direction;
+            _prevX = X;
+            _prevY = Y;
         }
 
         public void Draw(SpriteBatch spriteBatch)
