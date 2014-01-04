@@ -273,9 +273,8 @@ namespace NetTest.Server
         private void HandlePlayerLeft(Player removed)
         {
             Console.WriteLine(
-                "{0} left with the following message: \n {1}",
-                removed.Info.Username,
-                "unknown");
+                "{0} has left the game",
+                removed.Info.Username);
 
             foreach (Player p in _players) //loop through other players
             {

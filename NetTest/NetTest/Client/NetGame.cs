@@ -11,16 +11,36 @@ using System.Net;
 
 namespace NetTest.Client
 {
+    /// <summary>
+    /// Represents the client-side network game
+    /// </summary>
     public class NetGame
     {
-        NetClient _client;
         const int _DEFAULTSERVERPORT = 14245;
-        List<Player> _players = new List<Player>();
 
+        /// <summary>
+        /// The core Net client
+        /// </summary>
+        NetClient _client;
+        /// <summary>
+        /// The amount uploaded by our packets
+        /// </summary>
         long AccountedUpload = 0;
+        /// <summary>
+        /// The amount downloaded in our packets
+        /// </summary>
         long AccountedDownload = 0;
+        /// <summary>
+        /// The current port
+        /// </summary>
         int _port;
+        /// <summary>
+        /// A list of all local servers, only populated if an IP and port were not specified
+        /// </summary>
+        List<IPEndPoint> _availableServers = new List<IPEndPoint>();
 
+        List<Player> _players = new List<Player>();
+        
         Texture2D _playerTex;        
         PlayerInfo _playerInfo;
         byte _playerID;
@@ -28,9 +48,7 @@ namespace NetTest.Client
         PlayerInput _pInput;
 
         Vector2 RoomSize;
-
-        List<IPEndPoint> _availableServers = new List<IPEndPoint>();
-
+        
         public List<IPEndPoint> AvailableServers
         {
             get { return _availableServers; }
@@ -53,7 +71,7 @@ namespace NetTest.Client
 
             _client = new NetClient(config);
             _client.Start();
-
+            
             if (port == null)
                 _port = _DEFAULTSERVERPORT;
             else
@@ -120,17 +138,21 @@ namespace NetTest.Client
                     case NetIncomingMessageType.DiscoveryResponse:
                         _availableServers.Add(msg.SenderEndPoint);
                         string serverName = msg.ReadString();
-                        Console.WriteLine("found a server at " + msg.SenderEndPoint + 
+                        Console.WriteLine("found a server at " + msg.SenderEndPoint +
                             ", named " + serverName);
                         //if (_client.ConnectionStatus == NetConnectionStatus.None)
                         //{
-                            Console.WriteLine("Connecting to first server at " + msg.SenderEndPoint);
-                            _client.Connect(msg.SenderEndPoint);
+                        Console.WriteLine("Connecting to first server at " + msg.SenderEndPoint);
+                        _client.Connect(msg.SenderEndPoint);
                         //}
                         break;
                     case NetIncomingMessageType.StatusChanged:
-                        Console.WriteLine("Connected to server, joining game");
-                        RequestJoin();
+                        NetConnectionStatus status = (NetConnectionStatus)msg.ReadByte();
+                        if (status == NetConnectionStatus.Connected)
+                        {
+                            Console.WriteLine("Connected to server, joining game");
+                            RequestJoin();
+                        }
                         break;
 
                     case NetIncomingMessageType.Data: //data was received
@@ -162,6 +184,7 @@ namespace NetTest.Client
 
                     case NetIncomingMessageType.WarningMessage:
                     case NetIncomingMessageType.DebugMessage:
+                    case NetIncomingMessageType.ErrorMessage:
                         Console.WriteLine(msg.ReadString());
                         break;
 
@@ -181,10 +204,10 @@ namespace NetTest.Client
                 Matrix.CreateTranslation(new Vector3(-CameraPos.X + 400, -CameraPos.Y + 240, 0)));
 
             spriteBatch.Draw(CommonResources.MapTex, new Rectangle(0, 0, 1600 * 4, 960 * 4), Color.Olive);
-            
+
             foreach (Player p in _players)
                 p.Draw(spriteBatch);
-            
+
             spriteBatch.End();
 
             spriteBatch.Begin();
