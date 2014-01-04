@@ -122,7 +122,7 @@ namespace NetTest.Server
                     {
                         player.UpdatePositions(_roomSize);
 
-                        //if (player.NeedsUpdate)
+                        if (player.NeedsUpdate)
                             SendPlayerMoved(player);
                     }
 

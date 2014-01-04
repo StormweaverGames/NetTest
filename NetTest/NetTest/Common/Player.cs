@@ -12,8 +12,8 @@ namespace NetTest.Common
     public class Player
     {
         private const float _TORAD = MathHelper.Pi / 180.0F;
-        private const float _FRICTION = 1.1F;
-        private const float _SPEEDELIPSON = 0.2F;
+        private const float _FRICTION = 1.2F;
+        private const float _SPEEDELIPSON = 0.5F;
 
         byte _playerID;
         PlayerInfo _info;
@@ -36,8 +36,9 @@ namespace NetTest.Common
 
         public bool NeedsUpdate
         {
-            get { return _speed != _prevSpeed || _direction != _prevDirection; }
+            get { return _needsUpdate; }
         }
+        private bool _needsUpdate = true;
 
         public byte PlayerID { get { return _playerID; } }
         public PlayerInfo Info { get { return _info; } }
@@ -93,6 +94,11 @@ namespace NetTest.Common
                 _position.Y < 0 ? 0 : _position.Y;
 
             _speed = Math.Abs(_speed) < 0.1F ? 0F : _speed;
+
+            if (_speed != _prevSpeed || _direction != _prevDirection)
+                _needsUpdate = true;
+            else
+                _needsUpdate = false;
 
             _prevSpeed = _speed;
             _prevDirection = _direction;
