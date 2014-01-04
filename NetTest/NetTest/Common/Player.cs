@@ -20,8 +20,8 @@ namespace NetTest.Common
         NetConnection _connection;
 
         Vector2 _position;
-        float _speed;
-        float _direction;
+        float _speed, _prevSpeed;
+        float _direction, _prevDirection;
 
         float _health = 1.0F;
         
@@ -34,6 +34,10 @@ namespace NetTest.Common
         float _halfNameWidth = 0;
         float _nameHeight = 0;
 
+        public bool NeedsUpdate
+        {
+            get { return _speed != _prevSpeed || _direction != _prevDirection; }
+        }
 
         public byte PlayerID { get { return _playerID; } }
         public PlayerInfo Info { get { return _info; } }
@@ -89,6 +93,9 @@ namespace NetTest.Common
                 _position.Y < 0 ? 0 : _position.Y;
 
             _speed = Math.Abs(_speed) < 0.1F ? 0F : _speed;
+
+            _prevSpeed = _speed;
+            _prevDirection = _direction;
         }
 
         public void Draw(SpriteBatch spriteBatch)

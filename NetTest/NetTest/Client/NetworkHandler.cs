@@ -6,15 +6,19 @@ using Lidgren.Network;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using NetTest.Common;
+using System.Diagnostics;
+using System.Net;
 
 namespace NetTest.Client
 {
-    public class NetworkHandler
+    public class NetGame
     {
         NetClient _client;
-        int _serverPort = 14245;
+        int _defaultServerPort = 14245;
         List<Player> _players = new List<Player>();
 
+        long AccountedUpload = 0;
+        long AccountedDownload = 0;
 
         Texture2D _playerTex;        
         PlayerInfo _playerInfo;
@@ -23,6 +27,13 @@ namespace NetTest.Client
         PlayerInput _pInput;
 
         Vector2 RoomSize;
+
+        List<IPEndPoint> _availableServers = new List<IPEndPoint>();
+
+        public List<IPEndPoint> AvailableServers
+        {
+            get { return _availableServers; }
+        }
 
         public Vector2 CameraPos
         {
@@ -33,18 +44,20 @@ namespace NetTest.Client
             }
         }
 
-        public NetworkHandler(Texture2D playerTex, PlayerInfo info, string IP = null)
+        public NetGame(Texture2D playerTex, PlayerInfo info, string IP = null)
         {
             NetPeerConfiguration config = new NetPeerConfiguration("nettest");
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+            config.ConnectionTimeout = 10F;
 
             _client = new NetClient(config);
             _client.Start();
 
             if (IP == null)
-                _client.DiscoverLocalPeers(_serverPort);
+                for (int i = 0; i <= 10; i ++ )
+                    _client.DiscoverLocalPeers(_defaultServerPort + i);
             else
-                _client.Connect(IP, _serverPort);
+                _client.Connect(IP, _defaultServerPort);
 
             _playerInfo = info;
             _playerTex = playerTex;
@@ -92,8 +105,15 @@ namespace NetTest.Client
                 switch (msg.MessageType)
                 {
                     case NetIncomingMessageType.DiscoveryResponse:
-                        _client.Connect(msg.SenderEndPoint);
-                        Console.WriteLine("found a server, connecting...");
+                        _availableServers.Add(msg.SenderEndPoint);
+                        string serverName = msg.ReadString();
+                        Console.WriteLine("found a server at " + msg.SenderEndPoint + 
+                            ", named " + serverName);
+                        //if (_client.ConnectionStatus == NetConnectionStatus.None)
+                        //{
+                            Console.WriteLine("Connecting to first server at " + msg.SenderEndPoint);
+                            _client.Connect(msg.SenderEndPoint);
+                        //}
                         break;
                     case NetIncomingMessageType.StatusChanged:
                         Console.WriteLine("Connected to server, joining game");
@@ -126,17 +146,51 @@ namespace NetTest.Client
                                 break;
                         }
                         break;
+
+                    case NetIncomingMessageType.WarningMessage:
+                    case NetIncomingMessageType.DebugMessage:
+                        Console.WriteLine(msg.ReadString());
+                        break;
+
+                    default:
+                        Console.WriteLine("received unhandled packet: " + msg.MessageType);
+                        break;
                 }
+                _client.Recycle(msg);
             }
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
+            spriteBatch.GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null,
+                Matrix.CreateTranslation(new Vector3(-CameraPos.X + 400, -CameraPos.Y + 240, 0)));
+
             spriteBatch.Draw(CommonResources.MapTex, new Rectangle(0, 0, 1600 * 4, 960 * 4), Color.Olive);
+            
             foreach (Player p in _players)
                 p.Draw(spriteBatch);
+            
+            spriteBatch.End();
+
+            spriteBatch.Begin();
+            spriteBatch.DrawString(CommonResources.StandardFont,
+                "dl: " + _client.Statistics.ReceivedBytes + "b / " + AccountedDownload, new Vector2(5, 10), Color.Black);
+            spriteBatch.DrawString(CommonResources.StandardFont,
+                "ul: " + _client.Statistics.SentBytes + "b / " + AccountedUpload, new Vector2(5, 25), Color.Black);
+
+            int y = 40;
+            foreach (IPEndPoint ep in _availableServers)
+            {
+                spriteBatch.DrawString(CommonResources.StandardFont, ep.Address + ":" + ep.Port,
+                    new Vector2(5, y), Color.Black);
+                y += 15;
+            }
+            spriteBatch.End();
         }
 
+        #region Outgoing
         private void SendInput()
         {
             NetOutgoingMessage m = _client.CreateMessage();
@@ -145,8 +199,26 @@ namespace NetTest.Client
             m.Write(_pInput.CurrentReqSpeedChange);
             m.Write(_pInput.CurrentReqDirectionChange);
             _client.SendMessage(m, NetDeliveryMethod.Unreliable);
+
+            AccountedUpload += m.LengthBytes;
         }
 
+        /// <summary>
+        /// Called when this client should request to join the server
+        /// </summary>
+        private void RequestJoin()
+        {
+            NetOutgoingMessage m = _client.CreateMessage();
+            m.Write(0, 8);
+            _playerInfo.WriteToPacket(m);
+            _client.SendMessage(m, NetDeliveryMethod.ReliableUnordered);
+
+            AccountedUpload += m.LengthBytes;
+            Console.WriteLine("Sent join request");
+        }
+        #endregion
+
+        #region Incoming
         /// <summary>
         /// Called when a player's state has been updated by the server
         /// </summary>
@@ -169,8 +241,14 @@ namespace NetTest.Client
                 p.Speed = speed;
                 p.Direction = direction;
             }
+
+            AccountedDownload += m.LengthBytes;
         }
 
+        /// <summary>
+        /// Called when a player's HP changes
+        /// </summary>
+        /// <param name="m"></param>
         private void HandlePlayerHPChanged(NetIncomingMessage m)
         {
             try
@@ -179,20 +257,10 @@ namespace NetTest.Client
                 float newHP = m.ReadSingle();
 
                 _players.Find(x => x.PlayerID == pID).Health = newHP;
+
+                AccountedDownload += m.LengthBytes;
             }
             catch (Exception) { }
-        }
-
-        /// <summary>
-        /// Called when this client should request to join the server
-        /// </summary>
-        private void RequestJoin()
-        {
-            NetOutgoingMessage m = _client.CreateMessage();
-            m.Write(0, 8);
-            _playerInfo.WriteToPacket(m);
-            _client.SendMessage(m, NetDeliveryMethod.ReliableOrdered);
-            Console.WriteLine("Sent join request");
         }
 
         /// <summary>
@@ -201,7 +269,7 @@ namespace NetTest.Client
         /// <param name="reason"></param>
         public void ExitGame(string reason)
         {
-            _client.Shutdown("Goodbye");
+            _client.Shutdown(reason);
         }
 
         /// <summary>
@@ -227,7 +295,8 @@ namespace NetTest.Client
 
                 _players.Add(new Player(pID, pPos, pInfo, null));
             }
-
+            
+            AccountedDownload += m.LengthBytes;
             Console.WriteLine("Joined a game with {0} players as '{1}'", playerCount, _playerInfo.Username);
         }
 
@@ -242,6 +311,8 @@ namespace NetTest.Client
             PlayerInfo pInfo = PlayerInfo.ReadFromPacket(m);
 
             _players.Add(new Player(pID, pPos, pInfo, null));
+
+            AccountedDownload += m.LengthBytes;
             Console.WriteLine("{0} has left the game.", pInfo.Username);
         }
 
@@ -255,7 +326,9 @@ namespace NetTest.Client
             Player p = _players.Find(x => x.PlayerID == pID);
             _players.Remove(p);
 
+            AccountedDownload += m.LengthBytes;
             Console.WriteLine("{0} has left the game.",p.Info.Username);
         }
+        #endregion
     }
 }

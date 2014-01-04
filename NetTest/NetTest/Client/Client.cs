@@ -22,7 +22,7 @@ namespace NetTest.Client
         Color[] Colors = new Color[] { Color.Red, Color.Orange, Color.Blue, Color.Magenta };
         Dictionary<long, Vector2> positions = new Dictionary<long, Vector2>();
 
-        NetworkHandler _netHandler;
+        NetGame _netHandler;
         PlayerInfo pInfo;
 
         BasicEffect effect;
@@ -51,7 +51,7 @@ namespace NetTest.Client
 
             effect = new BasicEffect(GraphicsDevice);
             
-            _netHandler = new NetworkHandler(texture, pInfo, _ip);
+            _netHandler = new NetGame(texture, pInfo, _ip);
         }
 
         protected override void Update(GameTime gameTime)
@@ -63,14 +63,7 @@ namespace NetTest.Client
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null,  null, 
-                Matrix.CreateTranslation(new Vector3(-_netHandler.CameraPos.X + 400, -_netHandler.CameraPos.Y + 240, 0)));
-
             _netHandler.Draw(spriteBatch);
-
-            spriteBatch.End();
 
             base.Draw(gameTime);
         }

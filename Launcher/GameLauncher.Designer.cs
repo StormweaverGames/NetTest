@@ -30,16 +30,23 @@
         {
             this.lbl_launchType = new System.Windows.Forms.Label();
             this.cmb_launchType = new System.Windows.Forms.ComboBox();
-            this.grb_clientProperties = new System.Windows.Forms.GroupBox();
+            this.grp_clientProperties = new System.Windows.Forms.GroupBox();
+            this.txt_ip = new System.Windows.Forms.TextBox();
+            this.lbl_IP = new System.Windows.Forms.Label();
             this.pnl_colorPicker = new System.Windows.Forms.Panel();
             this.lbl_color = new System.Windows.Forms.Label();
             this.txt_clientName = new System.Windows.Forms.TextBox();
             this.lbl_clientName = new System.Windows.Forms.Label();
             this.cdl_playerColor = new System.Windows.Forms.ColorDialog();
             this.btn_launch = new System.Windows.Forms.Button();
-            this.lbl_IP = new System.Windows.Forms.Label();
-            this.txt_ip = new System.Windows.Forms.TextBox();
-            this.grb_clientProperties.SuspendLayout();
+            this.grp_serverProperties = new System.Windows.Forms.GroupBox();
+            this.nud_serverPort = new System.Windows.Forms.NumericUpDown();
+            this.lbl_serverPort = new System.Windows.Forms.Label();
+            this.txt_servername = new System.Windows.Forms.TextBox();
+            this.lbl_serverName = new System.Windows.Forms.Label();
+            this.grp_clientProperties.SuspendLayout();
+            this.grp_serverProperties.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_serverPort)).BeginInit();
             this.SuspendLayout();
             // 
             // lbl_launchType
@@ -64,20 +71,37 @@
             this.cmb_launchType.Text = "client";
             this.cmb_launchType.SelectedIndexChanged += new System.EventHandler(this.cmb_launchType_SelectedIndexChanged);
             // 
-            // grb_clientProperties
+            // grp_clientProperties
             // 
-            this.grb_clientProperties.Controls.Add(this.txt_ip);
-            this.grb_clientProperties.Controls.Add(this.lbl_IP);
-            this.grb_clientProperties.Controls.Add(this.pnl_colorPicker);
-            this.grb_clientProperties.Controls.Add(this.lbl_color);
-            this.grb_clientProperties.Controls.Add(this.txt_clientName);
-            this.grb_clientProperties.Controls.Add(this.lbl_clientName);
-            this.grb_clientProperties.Location = new System.Drawing.Point(16, 40);
-            this.grb_clientProperties.Name = "grb_clientProperties";
-            this.grb_clientProperties.Size = new System.Drawing.Size(281, 239);
-            this.grb_clientProperties.TabIndex = 2;
-            this.grb_clientProperties.TabStop = false;
-            this.grb_clientProperties.Text = "Client Properties";
+            this.grp_clientProperties.Controls.Add(this.txt_ip);
+            this.grp_clientProperties.Controls.Add(this.lbl_IP);
+            this.grp_clientProperties.Controls.Add(this.pnl_colorPicker);
+            this.grp_clientProperties.Controls.Add(this.lbl_color);
+            this.grp_clientProperties.Controls.Add(this.txt_clientName);
+            this.grp_clientProperties.Controls.Add(this.lbl_clientName);
+            this.grp_clientProperties.Location = new System.Drawing.Point(16, 40);
+            this.grp_clientProperties.Name = "grp_clientProperties";
+            this.grp_clientProperties.Size = new System.Drawing.Size(281, 116);
+            this.grp_clientProperties.TabIndex = 2;
+            this.grp_clientProperties.TabStop = false;
+            this.grp_clientProperties.Text = "Client Properties";
+            // 
+            // txt_ip
+            // 
+            this.txt_ip.Location = new System.Drawing.Point(10, 84);
+            this.txt_ip.Name = "txt_ip";
+            this.txt_ip.Size = new System.Drawing.Size(265, 20);
+            this.txt_ip.TabIndex = 5;
+            this.txt_ip.Leave += new System.EventHandler(this.txt_ip_Leave);
+            // 
+            // lbl_IP
+            // 
+            this.lbl_IP.AutoSize = true;
+            this.lbl_IP.Location = new System.Drawing.Point(10, 68);
+            this.lbl_IP.Name = "lbl_IP";
+            this.lbl_IP.Size = new System.Drawing.Size(94, 13);
+            this.lbl_IP.TabIndex = 4;
+            this.lbl_IP.Text = "IP (blank for LAN):";
             // 
             // pnl_colorPicker
             // 
@@ -105,6 +129,7 @@
             this.txt_clientName.TabIndex = 1;
             this.txt_clientName.Text = "Player";
             this.txt_clientName.TextChanged += new System.EventHandler(this.txt_clientName_TextChanged);
+            this.txt_clientName.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txt_clientName_KeyPress);
             // 
             // lbl_clientName
             // 
@@ -131,36 +156,84 @@
             this.btn_launch.UseVisualStyleBackColor = true;
             this.btn_launch.Click += new System.EventHandler(this.btn_launch_Click);
             // 
-            // lbl_IP
+            // grp_serverProperties
             // 
-            this.lbl_IP.AutoSize = true;
-            this.lbl_IP.Location = new System.Drawing.Point(10, 68);
-            this.lbl_IP.Name = "lbl_IP";
-            this.lbl_IP.Size = new System.Drawing.Size(94, 13);
-            this.lbl_IP.TabIndex = 4;
-            this.lbl_IP.Text = "IP (blank for LAN):";
+            this.grp_serverProperties.Controls.Add(this.nud_serverPort);
+            this.grp_serverProperties.Controls.Add(this.lbl_serverPort);
+            this.grp_serverProperties.Controls.Add(this.txt_servername);
+            this.grp_serverProperties.Controls.Add(this.lbl_serverName);
+            this.grp_serverProperties.Enabled = false;
+            this.grp_serverProperties.Location = new System.Drawing.Point(16, 162);
+            this.grp_serverProperties.Name = "grp_serverProperties";
+            this.grp_serverProperties.Size = new System.Drawing.Size(281, 117);
+            this.grp_serverProperties.TabIndex = 4;
+            this.grp_serverProperties.TabStop = false;
+            this.grp_serverProperties.Text = "Server Properties";
             // 
-            // txt_ip
+            // nud_serverPort
             // 
-            this.txt_ip.Location = new System.Drawing.Point(10, 84);
-            this.txt_ip.Name = "txt_ip";
-            this.txt_ip.Size = new System.Drawing.Size(265, 20);
-            this.txt_ip.TabIndex = 5;
-            this.txt_ip.Leave += new System.EventHandler(this.txt_ip_Leave);
+            this.nud_serverPort.Location = new System.Drawing.Point(85, 44);
+            this.nud_serverPort.Maximum = new decimal(new int[] {
+            14255,
+            0,
+            0,
+            0});
+            this.nud_serverPort.Minimum = new decimal(new int[] {
+            14245,
+            0,
+            0,
+            0});
+            this.nud_serverPort.Name = "nud_serverPort";
+            this.nud_serverPort.Size = new System.Drawing.Size(66, 20);
+            this.nud_serverPort.TabIndex = 3;
+            this.nud_serverPort.Value = new decimal(new int[] {
+            14245,
+            0,
+            0,
+            0});
+            // 
+            // lbl_serverPort
+            // 
+            this.lbl_serverPort.AutoSize = true;
+            this.lbl_serverPort.Location = new System.Drawing.Point(16, 46);
+            this.lbl_serverPort.Name = "lbl_serverPort";
+            this.lbl_serverPort.Size = new System.Drawing.Size(63, 13);
+            this.lbl_serverPort.TabIndex = 2;
+            this.lbl_serverPort.Text = "Server Port:";
+            // 
+            // txt_servername
+            // 
+            this.txt_servername.Location = new System.Drawing.Point(85, 17);
+            this.txt_servername.Name = "txt_servername";
+            this.txt_servername.Size = new System.Drawing.Size(190, 20);
+            this.txt_servername.TabIndex = 1;
+            // 
+            // lbl_serverName
+            // 
+            this.lbl_serverName.AutoSize = true;
+            this.lbl_serverName.Location = new System.Drawing.Point(7, 20);
+            this.lbl_serverName.Name = "lbl_serverName";
+            this.lbl_serverName.Size = new System.Drawing.Size(72, 13);
+            this.lbl_serverName.TabIndex = 0;
+            this.lbl_serverName.Text = "Server Name:";
             // 
             // GameLauncher
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(312, 291);
+            this.Controls.Add(this.grp_serverProperties);
             this.Controls.Add(this.btn_launch);
-            this.Controls.Add(this.grb_clientProperties);
+            this.Controls.Add(this.grp_clientProperties);
             this.Controls.Add(this.cmb_launchType);
             this.Controls.Add(this.lbl_launchType);
             this.Name = "GameLauncher";
             this.Text = "Launcher";
-            this.grb_clientProperties.ResumeLayout(false);
-            this.grb_clientProperties.PerformLayout();
+            this.grp_clientProperties.ResumeLayout(false);
+            this.grp_clientProperties.PerformLayout();
+            this.grp_serverProperties.ResumeLayout(false);
+            this.grp_serverProperties.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_serverPort)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -170,7 +243,7 @@
 
         private System.Windows.Forms.Label lbl_launchType;
         private System.Windows.Forms.ComboBox cmb_launchType;
-        private System.Windows.Forms.GroupBox grb_clientProperties;
+        private System.Windows.Forms.GroupBox grp_clientProperties;
         private System.Windows.Forms.Panel pnl_colorPicker;
         private System.Windows.Forms.Label lbl_color;
         private System.Windows.Forms.TextBox txt_clientName;
@@ -179,5 +252,10 @@
         private System.Windows.Forms.Button btn_launch;
         private System.Windows.Forms.TextBox txt_ip;
         private System.Windows.Forms.Label lbl_IP;
+        private System.Windows.Forms.GroupBox grp_serverProperties;
+        private System.Windows.Forms.TextBox txt_servername;
+        private System.Windows.Forms.Label lbl_serverName;
+        private System.Windows.Forms.Label lbl_serverPort;
+        private System.Windows.Forms.NumericUpDown nud_serverPort;
     }
 }
