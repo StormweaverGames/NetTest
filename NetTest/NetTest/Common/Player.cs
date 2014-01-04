@@ -13,7 +13,7 @@ namespace NetTest.Common
     {
         private const float _TORAD = MathHelper.Pi / 180.0F;
         private const float _FRICTION = 1.2F;
-        private const float _SPEEDELIPSON = 0.5F;
+        private const float _SPEEDEPSILON = 0.5F;
 
         byte _playerID;
         PlayerInfo _info;

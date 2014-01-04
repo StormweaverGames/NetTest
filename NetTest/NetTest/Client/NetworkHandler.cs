@@ -14,11 +14,12 @@ namespace NetTest.Client
     public class NetGame
     {
         NetClient _client;
-        int _defaultServerPort = 14245;
+        const int _DEFAULTSERVERPORT = 14245;
         List<Player> _players = new List<Player>();
 
         long AccountedUpload = 0;
         long AccountedDownload = 0;
+        int _port;
 
         Texture2D _playerTex;        
         PlayerInfo _playerInfo;
@@ -44,7 +45,7 @@ namespace NetTest.Client
             }
         }
 
-        public NetGame(Texture2D playerTex, PlayerInfo info, string IP = null)
+        public NetGame(Texture2D playerTex, PlayerInfo info, string IP = null, int? port = null)
         {
             NetPeerConfiguration config = new NetPeerConfiguration("nettest");
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
@@ -53,11 +54,23 @@ namespace NetTest.Client
             _client = new NetClient(config);
             _client.Start();
 
-            if (IP == null)
-                for (int i = 0; i <= 10; i ++ )
-                    _client.DiscoverLocalPeers(_defaultServerPort + i);
+            if (port == null)
+                _port = _DEFAULTSERVERPORT;
             else
-                _client.Connect(IP, _defaultServerPort);
+                _port = (int)port;
+
+            if (IP == null)
+            {
+                if (_port == _DEFAULTSERVERPORT)
+                {
+                    for (int i = 0; i <= 10; i++)
+                        _client.DiscoverLocalPeers(_DEFAULTSERVERPORT + i);
+                }
+                else
+                    _client.DiscoverLocalPeers(_port);
+            }
+            else
+                _client.Connect(IP, _port);
 
             _playerInfo = info;
             _playerTex = playerTex;

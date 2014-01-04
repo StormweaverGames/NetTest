@@ -27,14 +27,16 @@ namespace NetTest.Client
 
         BasicEffect effect;
         string _ip;
+        int? _port;
 
-        public Game(PlayerInfo clientInfo, string IP = null)
+        public Game(PlayerInfo clientInfo, string IP = null, int? port = null)
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
             pInfo = clientInfo;
             _ip = IP;
+            _port = port;
         }
 
         protected override void Initialize()
@@ -50,8 +52,8 @@ namespace NetTest.Client
             texture = CommonResources.PlayerTex;
 
             effect = new BasicEffect(GraphicsDevice);
-            
-            _netHandler = new NetGame(texture, pInfo, _ip);
+
+            _netHandler = new NetGame(texture, pInfo, _ip, _port);
         }
 
         protected override void Update(GameTime gameTime)

@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using Launcher.Properties;
 
 namespace Launcher
@@ -22,6 +23,8 @@ namespace Launcher
         {
             InitializeComponent();
             cmb_launchType.SelectedIndex = 0;
+
+            txt_ip.ValidatingType = typeof(IPAddress);
 
             Username = Settings.Default.UserName;
             UserColor = Settings.Default.Color;
@@ -67,7 +70,8 @@ namespace Launcher
             {
                 case 0:
                     Process.Start(Directory.GetCurrentDirectory() + "/NetTest.exe", string.Format(
-                        "{0} \"{1}\" {2} {3} {4}", "client", Username, UserColor.R, UserColor.G, UserColor.B));
+                        "{0} \"{1}\" {2} {3} {4} {5}", new object[]{"client", Username, UserColor.R, UserColor.G, UserColor.B, 
+                        txt_ip.Text}));
                     break;
                 case 1:
                     Process.Start(Directory.GetCurrentDirectory() + "/NetTest.exe", string.Format(
@@ -92,6 +96,27 @@ namespace Launcher
             }
             else
                 e.Handled = false;
+        }
+
+        private void txt_ip_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Char.IsDigit(e.KeyChar) || e.KeyChar == '.' || char.IsControl(e.KeyChar)
+                || (
+                (e.KeyChar == ';' & Control.ModifierKeys.HasFlag(Keys.ShiftKey)) & 
+                txt_ip.Text.IndexOf(':') != -1))
+            {
+                e.Handled = false;
+            }
+            else
+                e.Handled = true;
+        }
+
+        private void txt_port_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (char.IsDigit(e.KeyChar))
+                e.Handled = false;
+            else
+                e.Handled = true;
         }
     }
 }

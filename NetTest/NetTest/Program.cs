@@ -29,6 +29,7 @@ namespace NetTest
             string[] args = new string[0];
             PlayerInfo clientInfo = new PlayerInfo();
             string IP = null;
+            int? port = null;
 
             if (arguments.Length >= 5 & arguments[0] == "client")
             {
@@ -40,6 +41,9 @@ namespace NetTest
                 clientInfo.Color = new Color(r, g, b, 255);
                 if (arguments.Length == 6)
                     IP = arguments[5];
+                if (arguments.Length == 7)
+                    port = int.Parse(arguments[6]);
+
             }
             else if (arguments[0] == "server")
             {
@@ -53,7 +57,7 @@ namespace NetTest
             switch (GameType.ToLower())
             {
                 case "client":
-                    using (Game game = new Game(clientInfo, IP))
+                    using (Game game = new Game(clientInfo, IP, port))
                     {
                         game.Run();
                     }

@@ -31,7 +31,9 @@
             this.lbl_launchType = new System.Windows.Forms.Label();
             this.cmb_launchType = new System.Windows.Forms.ComboBox();
             this.grp_clientProperties = new System.Windows.Forms.GroupBox();
-            this.txt_ip = new System.Windows.Forms.TextBox();
+            this.txt_port = new System.Windows.Forms.TextBox();
+            this.lbl_port = new System.Windows.Forms.Label();
+            this.txt_ip = new System.Windows.Forms.MaskedTextBox();
             this.lbl_IP = new System.Windows.Forms.Label();
             this.pnl_colorPicker = new System.Windows.Forms.Panel();
             this.lbl_color = new System.Windows.Forms.Label();
@@ -73,6 +75,8 @@
             // 
             // grp_clientProperties
             // 
+            this.grp_clientProperties.Controls.Add(this.txt_port);
+            this.grp_clientProperties.Controls.Add(this.lbl_port);
             this.grp_clientProperties.Controls.Add(this.txt_ip);
             this.grp_clientProperties.Controls.Add(this.lbl_IP);
             this.grp_clientProperties.Controls.Add(this.pnl_colorPicker);
@@ -86,13 +90,32 @@
             this.grp_clientProperties.TabStop = false;
             this.grp_clientProperties.Text = "Client Properties";
             // 
+            // txt_port
+            // 
+            this.txt_port.Location = new System.Drawing.Point(168, 84);
+            this.txt_port.Name = "txt_port";
+            this.txt_port.Size = new System.Drawing.Size(59, 20);
+            this.txt_port.TabIndex = 7;
+            this.txt_port.Text = "14245";
+            this.txt_port.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txt_port_KeyPress);
+            // 
+            // lbl_port
+            // 
+            this.lbl_port.AutoSize = true;
+            this.lbl_port.Location = new System.Drawing.Point(165, 68);
+            this.lbl_port.Name = "lbl_port";
+            this.lbl_port.Size = new System.Drawing.Size(26, 13);
+            this.lbl_port.TabIndex = 6;
+            this.lbl_port.Text = "Port";
+            // 
             // txt_ip
             // 
-            this.txt_ip.Location = new System.Drawing.Point(10, 84);
+            this.txt_ip.Location = new System.Drawing.Point(13, 84);
+            this.txt_ip.Mask = "###.###.###.###";
             this.txt_ip.Name = "txt_ip";
-            this.txt_ip.Size = new System.Drawing.Size(265, 20);
+            this.txt_ip.PromptChar = ' ';
+            this.txt_ip.Size = new System.Drawing.Size(138, 20);
             this.txt_ip.TabIndex = 5;
-            this.txt_ip.Leave += new System.EventHandler(this.txt_ip_Leave);
             // 
             // lbl_IP
             // 
@@ -250,12 +273,14 @@
         private System.Windows.Forms.Label lbl_clientName;
         private System.Windows.Forms.ColorDialog cdl_playerColor;
         private System.Windows.Forms.Button btn_launch;
-        private System.Windows.Forms.TextBox txt_ip;
         private System.Windows.Forms.Label lbl_IP;
         private System.Windows.Forms.GroupBox grp_serverProperties;
         private System.Windows.Forms.TextBox txt_servername;
         private System.Windows.Forms.Label lbl_serverName;
         private System.Windows.Forms.Label lbl_serverPort;
         private System.Windows.Forms.NumericUpDown nud_serverPort;
+        private System.Windows.Forms.MaskedTextBox txt_ip;
+        private System.Windows.Forms.TextBox txt_port;
+        private System.Windows.Forms.Label lbl_port;
     }
 }
